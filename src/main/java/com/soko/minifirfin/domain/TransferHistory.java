@@ -23,14 +23,56 @@ public class TransferHistory extends AuditingEntity {
     @Convert(converter = MoneyConverter.class)
     private Money receiverRemainAmount;
 
-    public TransferHistory() {}
+    public TransferHistory() {
+    }
 
-    public TransferHistory(Long id, Member sender, Member receiver, Money sendAmount, Money senderRemainAmount, Money receiverRemainAmount) {
+    public TransferHistory(
+            final Long id,
+            final Member sender,
+            final Member receiver,
+            final Money sendAmount,
+            final Money senderRemainAmount,
+            final Money receiverRemainAmount
+    ) {
         this.id = id;
         this.sender = sender;
         this.receiver = receiver;
         this.sendAmount = sendAmount;
         this.senderRemainAmount = senderRemainAmount;
         this.receiverRemainAmount = receiverRemainAmount;
+    }
+
+    public TransferHistory(
+            final Member sender,
+            final Member receiver,
+            final Money sendAmount,
+            final Money senderRemainAmount,
+            final Money receiverRemainAmount
+    ) {
+        this(null, sender, receiver, sendAmount, senderRemainAmount, receiverRemainAmount);
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Member getSender() {
+        return sender;
+    }
+
+    public Member getReceiver() {
+        return receiver;
+    }
+
+    public Money getSendAmount() {
+        return sendAmount;
+    }
+
+    public Money getSenderRemainAmount() {
+        return senderRemainAmount;
+    }
+
+    public Money getReceiverRemainAmount() {
+        return receiverRemainAmount;
     }
 }
