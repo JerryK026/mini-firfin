@@ -1,5 +1,6 @@
 package com.soko.minifirfin.application;
 
+import com.soko.minifirfin.common.exception.BadRequestException;
 import com.soko.minifirfin.domain.Member;
 import com.soko.minifirfin.domain.Money;
 import com.soko.minifirfin.repository.MemberRepository;
@@ -15,6 +16,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.soko.minifirfin.common.exception.BadRequestCode.NOT_ENOUGH_MONEY;
+import static com.soko.minifirfin.common.exception.BadRequestCode.OVER_LIMITATION;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -41,12 +44,12 @@ class TransferServiceTest {
         Member newReceiver = memberRepository.findById(receiver.getId()).orElseThrow(IllegalArgumentException::new);
         int newHistoriesSize = transferHistoryRepository.findBySenderId(newSender.getId()).size();
 
-        assertThat(newSender.getMoneyAmountAsBigDecimal()).isEqualTo(0);
+        assertThat(newSender.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(0));
         assertThat(newReceiver.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(moneyAmount));
-        assertThat(historiesSize).isEqualTo(newHistoriesSize);
+        assertThat(newHistoriesSize).isEqualTo(historiesSize + 1);
     }
 
-    @DisplayName("송금 실패 : 송금자의 잔액이 송금 요청 금액을 넘으면 요청이 거절된다")
+    @DisplayName("송금 실패 : 송금자의 잔액이 송금 요청 금액보다 작으면 요청이 거절된다")
     @Test
     void transfer_reject_senderMoneyAmountUnderZero() {
         int moneyAmount = 10000;
@@ -54,8 +57,8 @@ class TransferServiceTest {
         Member receiver = memberRepository.save(new Member("receiver", 50000, 0));
 
         Assertions.assertThatThrownBy(() -> transferService.transfer(sender.getId(), receiver.getId(), new Money(moneyAmount)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("잔액이 부족합니다. 요청한 금액 : " + moneyAmount);
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining(NOT_ENOUGH_MONEY.getMessage());
     }
 
     @DisplayName("송금 실패 : 수금자의 잔액과 송금 요청 금액의 합이 수금자의 한도를 넘으면 요청이 거절된다")
@@ -67,8 +70,8 @@ class TransferServiceTest {
         Member receiver = memberRepository.save(new Member("receiver", limitation, limitation - moneyAmount + 1));
 
         Assertions.assertThatThrownBy(() -> transferService.transfer(sender.getId(), receiver.getId(), new Money(moneyAmount)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("한도가 초과되었습니다. 요청한 금액 : " + moneyAmount);
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining(OVER_LIMITATION.getMessage());
     }
 
     /* Tech */
