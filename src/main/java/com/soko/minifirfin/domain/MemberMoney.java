@@ -25,7 +25,11 @@ public class MemberMoney {
         this(new Money(moneyLimit), new Money(moneyAmount));
     }
 
-    public BigDecimal getMoneyAmount() {
-        return moneyAmount.getAmount();
+    public Money getMoneyLimit() {
+        return moneyLimit;
+    }
+
+    public Money getMoneyAmount() {
+        return moneyAmount;
     }
 }

@@ -34,6 +34,10 @@ public class Member extends AuditingEntity {
         this(null, name, null, null, null, new MemberMoney(limit, amount));
     }
 
+    public Member(String name, int limit) {
+        this(null, name, null, null, null, new MemberMoney(limit, 0));
+    }
+
     public Member(Long id, String name, MemberMoney memberMoney) {
         this(id, name, null, null, null, memberMoney);
     }
@@ -60,5 +64,9 @@ public class Member extends AuditingEntity {
 
     public MemberMoney getMemberMoney() {
         return memberMoney;
+    }
+
+    public BigDecimal getMoneyAmountAsBigDecimal() {
+        return this.memberMoney.getMoneyAmount().getAmount();
     }
 }
