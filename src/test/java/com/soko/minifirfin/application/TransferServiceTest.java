@@ -1,5 +1,6 @@
 package com.soko.minifirfin.application;
 
+import com.soko.minifirfin.common.exception.BadRequestCode;
 import com.soko.minifirfin.common.exception.BadRequestException;
 import com.soko.minifirfin.domain.Member;
 import com.soko.minifirfin.domain.Money;
@@ -40,9 +41,9 @@ class TransferServiceTest {
     @DisplayName("송금 성공 : 1.송금자의 잔액이 요청한 만큼 줄고 2.수금자의 잔액이 그만큼 추가되며 3.송금 내역이 저장된다")
     @Test
     void transfer_happyCase() {
-        int moneyAmount = 10000;
-        Member sender = memberRepository.save(new Member("sender", 50000, moneyAmount));
-        Member receiver = memberRepository.save(new Member("receiver", 50000, 0));
+        int moneyAmount = 10_000;
+        Member sender = memberRepository.save(new Member("sender", 50_000, moneyAmount));
+        Member receiver = memberRepository.save(new Member("receiver", 50_000, 0));
         int historiesSize = transferHistoryRepository.findBySenderId(sender.getId()).size();
 
         transferService.transfer(sender.getId(), receiver.getId(), new Money(moneyAmount));
@@ -62,9 +63,9 @@ class TransferServiceTest {
     @DisplayName("송금 실패 : 송금자의 잔액이 송금 요청 금액보다 작으면 요청이 거절된다")
     @Test
     void transfer_reject_senderMoneyAmountUnderZero() {
-        int moneyAmount = 10000;
-        Member sender = memberRepository.save(new Member("sender", 50000, moneyAmount - 5000));
-        Member receiver = memberRepository.save(new Member("receiver", 50000, 0));
+        int moneyAmount = 10_000;
+        Member sender = memberRepository.save(new Member("sender", 50_000, moneyAmount - 5_000));
+        Member receiver = memberRepository.save(new Member("receiver", 50_000, 0));
 
         assertThatThrownBy(
                 () -> transferService.transfer(
@@ -78,17 +79,55 @@ class TransferServiceTest {
     @DisplayName("송금 실패 : 수금자의 잔액과 송금 요청 금액의 합이 수금자의 한도를 넘으면 요청이 거절된다")
     @Test
     void transfer_reject_receiverMoneyAmountOverLimitation() {
-        int moneyAmount = 10000;
-        int limitation = 50000;
+        int moneyAmount = 10_000;
+        int limitation = 50_000;
         Member sender = memberRepository.save(new Member("sender", limitation, moneyAmount));
         Member receiver = memberRepository.save(
-                new Member("receiver", limitation, limitation - moneyAmount + 1));
+                new Member("receiver", limitation, limitation - moneyAmount + 1)
+        );
 
         assertThatThrownBy(
                 () -> transferService.transfer(sender.getId(), receiver.getId(),
                         new Money(moneyAmount)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining(RECEIVER_OVER_LIMITATION.getMessage());
+    }
+
+    @DisplayName("송금 실패 : 송금자와 수금자가 같으면 요청이 거절된다")
+    @Test
+    void transfer_reject_senderAndReceiverAreSame() {
+        Member sender = memberRepository.save(new Member("sender", 50_000, 10_000));
+
+        assertThatThrownBy(
+                () -> transferService.transfer(sender.getId(), sender.getId(), new Money(10_000)))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining(BadRequestCode.SENDER_AND_RECEIVER_ARE_SAME.getMessage());
+    }
+
+    @DisplayName("송금 실패 : 1회 충전 한도를 초과하면 요청이 거절된다")
+    @Test
+    void transfer_reject_overOnceLimitation() {
+        Member sender = memberRepository.save(new Member("sender", 5_000_000, 2_000_000));
+        Member receiver = memberRepository.save(new Member("receiver", 5_000_000, 0));
+
+        assertThatThrownBy(
+                () -> transferService.transfer(sender.getId(), receiver.getId(), new Money(1_990_001)))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining(BadRequestCode.SENDER_OVER_ONCE_LIMITATION.getMessage());
+    }
+
+    @DisplayName("송금 실패 : 1일 충전 한도를 초과하면 요청이 거절된다")
+    @Test
+    void transfer_reject_overDailyLimitation() {
+        Member sender = memberRepository.save(new Member("sender", 5_000_000, 2_000_000));
+        Member receiver = memberRepository.save(new Member("receiver", 5_000_000, 0));
+
+        transferService.transfer(sender.getId(), receiver.getId(), new Money(1_990_000));
+
+        assertThatThrownBy(
+                () -> transferService.transfer(sender.getId(), receiver.getId(), new Money(1)))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining(BadRequestCode.SENDER_OVER_DAILY_LIMITATION.getMessage());
     }
 
     @DisplayName("송금 내역 확인 성공 : 송금 내역 목록 첫 페이지를 확인한다")
@@ -163,7 +202,6 @@ class TransferServiceTest {
     @Test
     void transferHistories_happyCase_empty() {
         Member sender = memberRepository.save(new Member("sender", 5_000_000, 1_999_999));
-        Member receiver = memberRepository.save(new Member("receiver", 5_000_000, 0));
 
         TransferHistoriesResponse transferHistoriesResponse =
                 transferService.transferHistories(sender.getId(), null);
