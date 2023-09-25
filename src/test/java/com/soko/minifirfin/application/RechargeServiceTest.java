@@ -36,12 +36,13 @@ class RechargeServiceTest {
     @Test
     void recharge_happyCase() {
         Member member = memberRepository.save(new Member("recharger", 50_000, 10_000));
-        BigDecimal memberMoneyAmount = member.getMemberMoney().getMoneyAmount().getAmount();
 
         RechargeResponse rechargeResponse = rechargeService.recharge(member.getId(), new Money(30_000));
 
+        Member memberAfterRecharge = memberRepository.findById(member.getId()).get();
+
         assertThat(rechargeHistoryRepository.findById(rechargeResponse.rechargeHistoryId())).isNotNull();
-        assertThat(memberMoneyAmount).isEqualTo(BigDecimal.valueOf(10_000 + 30_000));
+        assertThat(memberAfterRecharge.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(10_000 + 30_000));
     }
 
     @DisplayName("충전 실패 : 사용자 한도가 초과된다")
@@ -49,7 +50,7 @@ class RechargeServiceTest {
     void recharge_reject_overMemberLimitation() {
         Member member = memberRepository.save(new Member("recharger", 50_000, 10_000));
 
-        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(30_000)))
+        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(50_000)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage(RECHARGER_OVER_LIMITATION.getMessage());
     }
@@ -59,7 +60,7 @@ class RechargeServiceTest {
     void recharge_reject_overDailyLimitation() {
         Member member = memberRepository.save(new Member("recharger", 100_000_000, 0));
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             rechargeService.recharge(member.getId(), new Money(5_000_000));
         }
 
@@ -73,9 +74,7 @@ class RechargeServiceTest {
     void recharge_reject_overOnceLimitation() {
         Member member = memberRepository.save(new Member("recharger", 100_000_000, 0));
 
-        rechargeService.recharge(member.getId(), new Money(6_000_000));
-
-        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(5_000_000)))
+        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(6_000_000)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage(RECHARGE_OVER_ONCE_LIMITATION.getMessage());
     }
@@ -107,7 +106,8 @@ class RechargeServiceTest {
         latch.await();
         service.shutdownNow();
 
+        Member memberAfterCharges = memberRepository.findById(member.getId()).get();
         // then
-        assertThat(member.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(moneyAmount * threadCount));
+        assertThat(memberAfterCharges.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(moneyAmount * threadCount));
     }
 }
