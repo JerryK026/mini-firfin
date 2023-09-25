@@ -76,10 +76,13 @@ public class TransferService {
         List<TransferHistory> transferHistoriesPageByCursor =
             findTransferHistoriesPageByCursor(senderId, cursorId, DEFAULT_PAGE_SIZE);
 
+        long nextCursor = getCursor(transferHistoriesPageByCursor);
+
         return TransferHistoriesResponse.of(
             transferHistoriesPageByCursor,
             transferHistoriesPageByCursor.isEmpty(),
-            getCursor(transferHistoriesPageByCursor)
+            nextCursor,
+            nextCursor == -1 ? Status.FAIL : Status.SUCCESS
         );
     }
 
