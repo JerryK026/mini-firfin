@@ -13,8 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MemberMoneyTest {
-
-
     @ParameterizedTest
     @DisplayName("transfer 성공")
     @ValueSource(ints = {10_000, 40_000})
@@ -30,7 +28,7 @@ class MemberMoneyTest {
 
     @Test
     @DisplayName("transfer 실패 : 송금자 잔액 부족")
-    void transfer_fail_senderNoeEnoughMoney() {
+    void transfer_fail_senderNotEnoughMoney() {
         MemberMoney senderMoney = new MemberMoney(50_000, 5_000);
         MemberMoney receiverMoney = new MemberMoney(50_000, 0);
 
