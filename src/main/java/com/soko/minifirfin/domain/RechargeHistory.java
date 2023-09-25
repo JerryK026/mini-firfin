@@ -10,19 +10,38 @@ public class RechargeHistory extends AuditingEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long memberId;
-    private Long receiverId;
     @Convert(converter = MoneyConverter.class)
     private Money rechargeAmount;
     @Convert(converter = MoneyConverter.class)
     private Money remainAmount;
 
-    public RechargeHistory() {}
+    public RechargeHistory() {
+    }
 
-    public RechargeHistory(Long id, Long memberId, Long receiverId, Money rechargeAmount, Money remainAmount) {
+    public RechargeHistory(Long id, Long memberId, Money rechargeAmount, Money remainAmount) {
         this.id = id;
         this.memberId = memberId;
-        this.receiverId = receiverId;
         this.rechargeAmount = rechargeAmount;
         this.remainAmount = remainAmount;
+    }
+
+    public RechargeHistory(Long memberId, Money rechargeAmount, Money remainAmount) {
+        this(null, memberId, rechargeAmount, remainAmount);
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Long getMemberId() {
+        return memberId;
+    }
+
+    public Money getRechargeAmount() {
+        return rechargeAmount;
+    }
+
+    public Money getRemainAmount() {
+        return remainAmount;
     }
 }
