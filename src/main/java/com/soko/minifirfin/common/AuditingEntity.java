@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-// TODO: deletedDateTime 추가하고 soft delete 처리할 수 있도록
+// 현재 role이 없기 때문에 admin이 없어 @Filter를 추가하진 않았음
 public class AuditingEntity {
 
     @Column(nullable = false, updatable = false)
@@ -21,11 +21,17 @@ public class AuditingEntity {
     @LastModifiedDate
     private LocalDateTime updatedDateTime;
 
+    private boolean deleted = Boolean.FALSE;
+
     public LocalDateTime getCreatedDateTime() {
         return createdDateTime;
     }
 
     public LocalDateTime getUpdatedDateTime() {
         return updatedDateTime;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
     }
 }
