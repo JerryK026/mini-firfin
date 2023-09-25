@@ -39,7 +39,7 @@ public class RechargeService {
             throw new BadRequestException(RECHARGE_OVER_ONCE_LIMITATION);
         }
 
-        validateDailyRechargeLimitation(memberId);
+        validateDailyRechargeLimitation(memberId, rechargeAmount);
 
         // TODO: 이 로직이 뒤에 있어도 데드락 안 걸리는지 확인
         Member member = findMemberByIdForUpdate(memberId);
@@ -63,7 +63,7 @@ public class RechargeService {
     }
 
     // TODO: 이 로직 RechargeHistories 일급 컬렉션 만들어서 도메인 레벨로 옮기고, 단위 테스트 추가하는 것도 좋을 듯
-    private void validateDailyRechargeLimitation(Long memberId) {
+    private void validateDailyRechargeLimitation(Long memberId, Money rechargeAmount) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime endOfToday = startOfToday.plusDays(1).minusSeconds(1);
         List<RechargeHistory> rechargeHistoriesOfToday =
@@ -77,6 +77,8 @@ public class RechargeService {
         for (RechargeHistory history : rechargeHistoriesOfToday) {
             money = money.add(history.getRechargeAmount());
         }
+
+        money = money.add(rechargeAmount);
 
         if (money.isOverThan(new Money(RECHARGE_DAILY_LIMITATION))) {
             throw new BadRequestException(RECHARGE_OVER_DAILY_LIMITATION);
