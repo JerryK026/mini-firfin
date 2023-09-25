@@ -6,8 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record RechargeResponse(
-        String memberName,
         Long rechargeHistoryId,
+        Long memberId,
+        String memberName,
         BigDecimal currentMoneyAmount,
         BigDecimal rechargedMoneyAmount,
         LocalDateTime timeStamp,

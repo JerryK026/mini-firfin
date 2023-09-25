@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static com.soko.minifirfin.common.exception.BadRequestCode.DIFFERENT_CURRENCY;
-import static com.soko.minifirfin.common.exception.BadRequestCode.NOT_ENOUGH_MONEY;
+import static com.soko.minifirfin.common.exception.BadRequestCode.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -57,5 +56,12 @@ class MoneyTest {
         assertThatThrownBy(() -> sender.transferTo(receiver, 100))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage(DIFFERENT_CURRENCY.getMessage());
+    }
+
+    @Test
+    void money_negativeThanException() {
+        assertThatThrownBy(() -> new Money(-1))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage(NEGATIVE_MONEY_NOT_ALLOWED.getMessage());
     }
 }
