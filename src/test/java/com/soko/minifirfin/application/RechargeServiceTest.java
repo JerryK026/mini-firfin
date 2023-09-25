@@ -60,7 +60,7 @@ class RechargeServiceTest {
     void recharge_reject_overDailyLimitation() {
         Member member = memberRepository.save(new Member("recharger", 100_000_000, 0));
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 5; i++) {
             rechargeService.recharge(member.getId(), new Money(5_000_000));
         }
 
