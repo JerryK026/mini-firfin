@@ -7,8 +7,9 @@ import com.soko.minifirfin.domain.TransferHistory;
 import com.soko.minifirfin.repository.MemberRepository;
 import com.soko.minifirfin.repository.TransferHistoryRepository;
 import com.soko.minifirfin.ui.response.TransferHistoriesResponse;
-import com.soko.minifirfin.ui.response.TransferHistoryResponse;
+
 import java.util.List;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.soko.minifirfin.common.exception.BadRequestCode.NOT_ENOUGH_MONEY;
-import static com.soko.minifirfin.common.exception.BadRequestCode.OVER_LIMITATION;
+import static com.soko.minifirfin.common.exception.BadRequestCode.RECEIVER_OVER_LIMITATION;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class TransferServiceTest {
@@ -46,14 +48,14 @@ class TransferServiceTest {
         transferService.transfer(sender.getId(), receiver.getId(), new Money(moneyAmount));
 
         Member newSender = memberRepository.findById(sender.getId())
-            .orElseThrow(IllegalAccessError::new);
+                .orElseThrow(IllegalAccessError::new);
         Member newReceiver = memberRepository.findById(receiver.getId())
-            .orElseThrow(IllegalArgumentException::new);
+                .orElseThrow(IllegalArgumentException::new);
         int newHistoriesSize = transferHistoryRepository.findBySenderId(newSender.getId()).size();
 
         assertThat(newSender.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(0));
-        assertThat(newReceiver.getMoneyAmountAsBigDecimal()).isEqualTo(
-            BigDecimal.valueOf(moneyAmount));
+        assertThat(newReceiver.getMoneyAmountAsBigDecimal())
+                .isEqualTo(BigDecimal.valueOf(moneyAmount));
         assertThat(newHistoriesSize).isEqualTo(historiesSize + 1);
     }
 
@@ -64,14 +66,13 @@ class TransferServiceTest {
         Member sender = memberRepository.save(new Member("sender", 50000, moneyAmount - 5000));
         Member receiver = memberRepository.save(new Member("receiver", 50000, 0));
 
-        Assertions.assertThatThrownBy(
+        assertThatThrownBy(
                 () -> transferService.transfer(
-                    sender.getId(),
-                    receiver.getId(),
-                    new Money(moneyAmount))
-            )
-            .isInstanceOf(BadRequestException.class)
-            .hasMessageContaining(NOT_ENOUGH_MONEY.getMessage());
+                        sender.getId(),
+                        receiver.getId(),
+                        new Money(moneyAmount)))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining(NOT_ENOUGH_MONEY.getMessage());
     }
 
     @DisplayName("송금 실패 : 수금자의 잔액과 송금 요청 금액의 합이 수금자의 한도를 넘으면 요청이 거절된다")
@@ -81,13 +82,13 @@ class TransferServiceTest {
         int limitation = 50000;
         Member sender = memberRepository.save(new Member("sender", limitation, moneyAmount));
         Member receiver = memberRepository.save(
-            new Member("receiver", limitation, limitation - moneyAmount + 1));
+                new Member("receiver", limitation, limitation - moneyAmount + 1));
 
-        Assertions.assertThatThrownBy(
+        assertThatThrownBy(
                 () -> transferService.transfer(sender.getId(), receiver.getId(),
-                    new Money(moneyAmount)))
-            .isInstanceOf(BadRequestException.class)
-            .hasMessageContaining(OVER_LIMITATION.getMessage());
+                        new Money(moneyAmount)))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining(RECEIVER_OVER_LIMITATION.getMessage());
     }
 
     @DisplayName("송금 내역 확인 성공 : 송금 내역 목록 첫 페이지를 확인한다")
@@ -101,11 +102,11 @@ class TransferServiceTest {
 
         // when
         TransferHistoriesResponse transferHistoriesResponse =
-            transferService.transferHistories(sender.getId(), null);
+                transferService.transferHistories(sender.getId(), null);
 
         long expectedCursor = transferHistoryRepository.findBySenderId(sender.getId())
-            .get(50 - 30)
-            .getId();
+                .get(50 - 30)
+                .getId();
 
         assertThat(transferHistoriesResponse.data().size()).isEqualTo(30);
         assertThat(transferHistoriesResponse.isEmpty()).isFalse();
@@ -126,7 +127,7 @@ class TransferServiceTest {
 
         // when
         TransferHistoriesResponse transferHistoriesResponse =
-            transferService.transferHistories(sender.getId(), cursor);
+                transferService.transferHistories(sender.getId(), cursor);
 
         long expectedCursor = transferHistories.get(0).getId();
 
@@ -150,7 +151,7 @@ class TransferServiceTest {
 
         // when
         TransferHistoriesResponse transferHistoriesResponse =
-            transferService.transferHistories(sender.getId(), cursor);
+                transferService.transferHistories(sender.getId(), cursor);
 
         // then
         assertThat(transferHistoriesResponse.data().size()).isEqualTo(0);
@@ -165,7 +166,7 @@ class TransferServiceTest {
         Member receiver = memberRepository.save(new Member("receiver", 5_000_000, 0));
 
         TransferHistoriesResponse transferHistoriesResponse =
-            transferService.transferHistories(sender.getId(), null);
+                transferService.transferHistories(sender.getId(), null);
 
         assertThat(transferHistoriesResponse.data().size()).isEqualTo(0);
         assertThat(transferHistoriesResponse.isEmpty()).isTrue();
@@ -179,23 +180,23 @@ class TransferServiceTest {
         int moneyAmount = 100;
         int threadCount = 50;
         Member sender = memberRepository.save(
-            new Member("sender", 50000, threadCount * moneyAmount));
+                new Member("sender", 50000, threadCount * moneyAmount));
         Member receiver = memberRepository.save(new Member("receiver", 50000, 0));
 
         transferNTimesAsync(threadCount, moneyAmount, sender.getId(), receiver.getId());
 
         Member newSender = memberRepository.findById(sender.getId())
-            .orElseThrow(IllegalAccessError::new);
+                .orElseThrow(IllegalAccessError::new);
         Member newReceiver = memberRepository.findById(receiver.getId())
-            .orElseThrow(IllegalArgumentException::new);
+                .orElseThrow(IllegalArgumentException::new);
 
         assertThat(newSender.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(0));
         assertThat(newReceiver.getMoneyAmountAsBigDecimal())
-            .isEqualTo(BigDecimal.valueOf(threadCount * moneyAmount));
+                .isEqualTo(BigDecimal.valueOf(threadCount * moneyAmount));
     }
 
     private void transferNTimesAsync(int n, int moneyAmount, long senderId, long receiverId)
-        throws InterruptedException {
+            throws InterruptedException {
         ExecutorService service = Executors.newFixedThreadPool(n);
         CountDownLatch latch = new CountDownLatch(n);
 

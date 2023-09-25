@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 import static com.soko.minifirfin.common.exception.BadRequestCode.NOT_ENOUGH_MONEY;
-import static com.soko.minifirfin.common.exception.BadRequestCode.OVER_LIMITATION;
+import static com.soko.minifirfin.common.exception.BadRequestCode.RECEIVER_OVER_LIMITATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -45,6 +45,6 @@ class MemberMoneyTest {
 
         assertThatThrownBy(() -> senderMoney.transfer(receiverMoney, 10000))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessage(OVER_LIMITATION.getMessage());
+                .hasMessage(RECEIVER_OVER_LIMITATION.getMessage());
     }
 }

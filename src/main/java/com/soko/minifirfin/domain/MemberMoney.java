@@ -5,7 +5,7 @@ import com.soko.minifirfin.common.exception.BadRequestException;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 
-import static com.soko.minifirfin.common.exception.BadRequestCode.OVER_LIMITATION;
+import static com.soko.minifirfin.common.exception.BadRequestCode.RECEIVER_OVER_LIMITATION;
 
 
 @Embeddable
@@ -32,7 +32,7 @@ public class MemberMoney {
 
     public void transfer(MemberMoney receiverMoney, Money amount) {
         if (isOverLimitation(receiverMoney, amount)) {
-            throw new BadRequestException(OVER_LIMITATION);
+            throw new BadRequestException(RECEIVER_OVER_LIMITATION);
         }
 
         this.moneyAmount.transferTo(receiverMoney.getMoneyAmount(), amount);
