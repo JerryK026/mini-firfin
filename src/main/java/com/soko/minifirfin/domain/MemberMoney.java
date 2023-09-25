@@ -6,6 +6,7 @@ import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 
 import static com.soko.minifirfin.common.exception.BadRequestCode.RECEIVER_OVER_LIMITATION;
+import static com.soko.minifirfin.common.exception.BadRequestCode.RECHARGER_OVER_LIMITATION;
 
 
 @Embeddable
@@ -38,6 +39,14 @@ public class MemberMoney {
         this.moneyAmount.transferTo(receiverMoney.getMoneyAmount(), amount);
     }
 
+    public void recharge(Money moneyForAddition) {
+        if (isOverLimitation(moneyForAddition)) {
+            throw new BadRequestException(RECHARGER_OVER_LIMITATION);
+        }
+
+        this.moneyAmount = this.moneyAmount.add(moneyForAddition);
+    }
+
     public Money getMoneyLimit() {
         return moneyLimit;
     }
@@ -51,5 +60,11 @@ public class MemberMoney {
         Money receiverMoneyAfterTransfer = receiverMoney.getMoneyAmount().add(amount);
 
         return receiverMoneyAfterTransfer.isOverThan(receiverLimit);
+    }
+
+    private boolean isOverLimitation(Money addAmount) {
+        Money addedMoney = this.moneyAmount.add(addAmount);
+
+        return addedMoney.isOverThan(this.moneyLimit);
     }
 }
