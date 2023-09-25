@@ -4,8 +4,7 @@ import com.soko.minifirfin.common.exception.BadRequestException;
 
 import java.math.BigDecimal;
 
-import static com.soko.minifirfin.common.exception.BadRequestCode.DIFFERENT_CURRENCY;
-import static com.soko.minifirfin.common.exception.BadRequestCode.NOT_ENOUGH_MONEY;
+import static com.soko.minifirfin.common.exception.BadRequestCode.*;
 
 
 public class Money {
@@ -29,6 +28,7 @@ public class Money {
     }
 
     public Money(BigDecimal amount, String currency) {
+        validate(amount);
         this.amount = amount;
         this.currency = currency;
     }
@@ -74,5 +74,11 @@ public class Money {
 
     private boolean areContainsDifferentCurrency(Money target, Money sendAmount) {
         return !this.currency.equals(sendAmount.currency) || !this.currency.equals(target.currency) || !target.currency.equals(sendAmount.currency);
+    }
+
+    private void validate(BigDecimal target) {
+        if (target.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BadRequestException(NEGATIVE_MONEY_NOT_ALLOWED);
+        }
     }
 }

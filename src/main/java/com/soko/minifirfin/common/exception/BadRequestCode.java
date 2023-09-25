@@ -7,6 +7,7 @@ public enum BadRequestCode {
 
     NOT_ENOUGH_MONEY(2000, "잔액이 모자랍니다."),
     DIFFERENT_CURRENCY(2001, "통화가 다릅니다."),
+    NEGATIVE_MONEY_NOT_ALLOWED(2002, "금액은 음수일 수 없습니다."),
     RECEIVER_OVER_LIMITATION(2002, "받는 사람의 잔액 한도를 초과합니다."),
     RECHARGER_OVER_LIMITATION(3000, "충전시 한도를 초과합니다."),
     RECHARGE_OVER_DAILY_LIMITATION(3001, "1일 충전 한도를 초과합니다. 1일 충전 한도 : 2999만원"),
