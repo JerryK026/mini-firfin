@@ -9,6 +9,9 @@ public enum BadRequestCode {
     DIFFERENT_CURRENCY(2001, "통화가 다릅니다."),
     NEGATIVE_MONEY_NOT_ALLOWED(2002, "금액은 음수일 수 없습니다."),
     RECEIVER_OVER_LIMITATION(2002, "받는 사람의 잔액 한도를 초과합니다."),
+    SENDER_AND_RECEIVER_ARE_SAME(2003, "보내는 사람과 받는 사람은 같은 사람일 수 없습니다."),
+    SENDER_OVER_DAILY_LIMITATION(2004, "1일 송금 한도를 초과합니다. 1일 송금 한도 : 199만원"),
+    SENDER_OVER_ONCE_LIMITATION(2005, "1회 송금 한도를 초과합니다. 1회 송금 한도 : 199만원"),
     RECHARGER_OVER_LIMITATION(3000, "충전시 한도를 초과합니다."),
     RECHARGE_OVER_DAILY_LIMITATION(3001, "1일 충전 한도를 초과합니다. 1일 충전 한도 : 2999만원"),
     RECHARGE_OVER_ONCE_LIMITATION(3002, "1회 충전 한도를 초과합니다. 1회 충전 한도 : 599만원");

@@ -5,8 +5,7 @@ import com.soko.minifirfin.common.exception.BadRequestException;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 
-import static com.soko.minifirfin.common.exception.BadRequestCode.RECEIVER_OVER_LIMITATION;
-import static com.soko.minifirfin.common.exception.BadRequestCode.RECHARGER_OVER_LIMITATION;
+import static com.soko.minifirfin.common.exception.BadRequestCode.*;
 
 
 @Embeddable
