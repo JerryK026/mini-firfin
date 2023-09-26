@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.soko.minifirfin.application.TransferServiceTest.TEST_IP_ADDRESS;
 import static com.soko.minifirfin.common.exception.BadRequestCode.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +42,7 @@ class RechargeServiceTest {
     void recharge_happyCase() {
         Member member = memberRepository.save(new Member("recharger", 50_000, 10_000));
 
-        RechargeResponse rechargeResponse = rechargeService.recharge(member.getId(), new Money(30_000));
+        RechargeResponse rechargeResponse = rechargeService.recharge(member.getId(), new Money(30_000), TEST_IP_ADDRESS);
 
         MemberMoney memberMoney = memberMoneyRepository.findByMemberId(member.getId()).get();
 
@@ -54,7 +55,7 @@ class RechargeServiceTest {
     void recharge_reject_overMemberLimitation() {
         Member member = memberRepository.save(new Member("recharger", 50_000, 10_000));
 
-        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(50_000)))
+        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(50_000), TEST_IP_ADDRESS))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage(RECHARGER_OVER_LIMITATION.getMessage());
     }
@@ -65,10 +66,10 @@ class RechargeServiceTest {
         Member member = memberRepository.save(new Member("recharger", 100_000_000, 0));
 
         for (int i = 0; i < 5; i++) {
-            rechargeService.recharge(member.getId(), new Money(5_000_000));
+            rechargeService.recharge(member.getId(), new Money(5_000_000), TEST_IP_ADDRESS);
         }
 
-        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(5_000_000)))
+        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(5_000_000), TEST_IP_ADDRESS))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage(RECHARGE_OVER_DAILY_LIMITATION.getMessage());
     }
@@ -78,7 +79,7 @@ class RechargeServiceTest {
     void recharge_reject_overOnceLimitation() {
         Member member = memberRepository.save(new Member("recharger", 100_000_000, 0));
 
-        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(6_000_000)))
+        assertThatThrownBy(() -> rechargeService.recharge(member.getId(), new Money(6_000_000), TEST_IP_ADDRESS))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage(RECHARGE_OVER_ONCE_LIMITATION.getMessage());
     }
@@ -100,7 +101,7 @@ class RechargeServiceTest {
         for (int i = 0; i < threadCount; i++) {
             service.submit(() -> {
                 try {
-                    rechargeService.recharge(member.getId(), new Money(moneyAmount));
+                    rechargeService.recharge(member.getId(), new Money(moneyAmount), TEST_IP_ADDRESS);
                 } finally {
                     latch.countDown();
                 }

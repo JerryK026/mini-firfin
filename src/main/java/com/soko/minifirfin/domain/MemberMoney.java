@@ -27,6 +27,9 @@ public class MemberMoney extends AuditingEntity {
     private Money moneyLimit;
     @Convert(converter = MoneyConverter.class)
     private Money moneyAmount;
+    // 프로젝트 단순화를 위해 default 값으로 고정한다.
+    private String paymentMethod = "Credit Card";
+    private String paymentInfo = "352-0660-1234-12";
 
     public MemberMoney() {}
 
@@ -81,6 +84,15 @@ public class MemberMoney extends AuditingEntity {
         return moneyAmount;
     }
 
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public String getPaymentInfo() {
+        return paymentInfo;
+    }
+
+    // 양방향 관계이기 때문에 부모 객체인 Member에서 자동으로 생성하기 위해 추가함
     public void setMember(final Member member) {
         this.member = member;
     }

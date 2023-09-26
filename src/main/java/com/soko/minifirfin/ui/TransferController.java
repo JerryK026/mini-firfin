@@ -6,6 +6,7 @@ import com.soko.minifirfin.ui.request.TransferRequest;
 import com.soko.minifirfin.ui.response.TransferHistoriesResponse;
 import com.soko.minifirfin.ui.response.TransferResponse;
 import jakarta.annotation.Nullable;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,14 +22,15 @@ public class TransferController {
 
     @PostMapping
     public ResponseEntity<TransferResponse> transfer(
+            HttpServletRequest request,
             @RequestHeader(value = "Bearer") final Long senderId,
             @RequestBody final TransferRequest transferRequest
     ) {
-
         TransferResponse transferResponse = transferService.transfer(
                 senderId,
                 transferRequest.receiverId(),
-                new Money(transferRequest.transferAmount())
+                new Money(transferRequest.transferAmount()),
+                request.getRemoteAddr()
         );
         return ResponseEntity.ok().body(transferResponse);
     }

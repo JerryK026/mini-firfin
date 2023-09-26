@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class TransferServiceTest {
-
+    public static String TEST_IP_ADDRESS = "127.0.0.1";
     @Autowired
     private TransferService transferService;
     @Autowired
@@ -50,7 +50,7 @@ class TransferServiceTest {
         Member receiver = memberRepository.save(new Member("receiver", 50_000, 0));
         int historiesSize = transferHistoryRepository.findBySenderId(sender.getId()).size();
 
-        transferService.transfer(sender.getId(), receiver.getId(), new Money(moneyAmount));
+        transferService.transfer(sender.getId(), receiver.getId(), new Money(moneyAmount), "");
 
         MemberMoney senderMoney = memberMoneyRepository.findByMemberId(sender.getId()).get();
         MemberMoney receiverMoney = memberMoneyRepository.findByMemberId(receiver.getId()).get();
@@ -72,7 +72,8 @@ class TransferServiceTest {
                 () -> transferService.transfer(
                         sender.getId(),
                         receiver.getId(),
-                        new Money(moneyAmount)))
+                        new Money(moneyAmount),
+                        TEST_IP_ADDRESS))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining(NOT_ENOUGH_MONEY.getMessage());
     }
@@ -88,8 +89,11 @@ class TransferServiceTest {
         );
 
         assertThatThrownBy(
-                () -> transferService.transfer(sender.getId(), receiver.getId(),
-                        new Money(moneyAmount)))
+                () -> transferService.transfer(sender.getId(),
+                        receiver.getId(),
+                        new Money(moneyAmount),
+                        TEST_IP_ADDRESS
+                ))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining(RECEIVER_OVER_LIMITATION.getMessage());
     }
@@ -100,7 +104,7 @@ class TransferServiceTest {
         Member sender = memberRepository.save(new Member("sender", 50_000, 10_000));
 
         assertThatThrownBy(
-                () -> transferService.transfer(sender.getId(), sender.getId(), new Money(10_000)))
+                () -> transferService.transfer(sender.getId(), sender.getId(), new Money(10_000), TEST_IP_ADDRESS))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining(BadRequestCode.SENDER_AND_RECEIVER_ARE_SAME.getMessage());
     }
@@ -112,7 +116,7 @@ class TransferServiceTest {
         Member receiver = memberRepository.save(new Member("receiver", 5_000_000, 0));
 
         assertThatThrownBy(
-                () -> transferService.transfer(sender.getId(), receiver.getId(), new Money(1_990_001)))
+                () -> transferService.transfer(sender.getId(), receiver.getId(), new Money(1_990_001), TEST_IP_ADDRESS))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining(BadRequestCode.SENDER_OVER_ONCE_LIMITATION.getMessage());
     }
@@ -123,10 +127,10 @@ class TransferServiceTest {
         Member sender = memberRepository.save(new Member("sender", 5_000_000, 2_000_000));
         Member receiver = memberRepository.save(new Member("receiver", 5_000_000, 0));
 
-        transferService.transfer(sender.getId(), receiver.getId(), new Money(1_990_000));
+        transferService.transfer(sender.getId(), receiver.getId(), new Money(1_990_000), TEST_IP_ADDRESS);
 
         assertThatThrownBy(
-                () -> transferService.transfer(sender.getId(), receiver.getId(), new Money(1)))
+                () -> transferService.transfer(sender.getId(), receiver.getId(), new Money(1), TEST_IP_ADDRESS))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining(BadRequestCode.SENDER_OVER_DAILY_LIMITATION.getMessage());
     }
@@ -239,7 +243,7 @@ class TransferServiceTest {
         for (int i = 0; i < n; i++) {
             service.submit(() -> {
                 try {
-                    transferService.transfer(senderId, receiverId, new Money(moneyAmount));
+                    transferService.transfer(senderId, receiverId, new Money(moneyAmount), TEST_IP_ADDRESS);
                 } finally {
                     latch.countDown();
                 }

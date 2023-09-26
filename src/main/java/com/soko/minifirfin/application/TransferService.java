@@ -43,7 +43,12 @@ public class TransferService {
     }
 
     @Transactional
-    public TransferResponse transfer(final Long senderId, final Long receiverId, final Money sendMoneyAmount) {
+    public TransferResponse transfer(
+            final Long senderId,
+            final Long receiverId,
+            final Money sendMoneyAmount,
+            final String senderIpAddress
+    ) {
         validateSamePerson(senderId, receiverId);
 
         if (sendMoneyAmount.isOverThan(new Money(TRANSFER_ONCE_LIMITATION))) {
@@ -61,16 +66,26 @@ public class TransferService {
         Money senderMoneyAmountAfterTransfer = senderMoney.getMoneyAmount();
         Money receiverMoneyAmountAfterTransfer = receiverMoney.getMoneyAmount();
 
+        Member sender = senderMoney.getMember();
+
+        // TODO: 부생성자 더 만들던가 정적팩토리 메서드 구현해서 깔끔하게 만들 필요가 있음
         TransferHistory transferHistory = transferHistoryRepository.save(
                 new TransferHistory(
-                        senderMoney.getMember(),
+                        sender,
                         receiverMoney.getMember(),
                         sendMoneyAmount,
                         senderMoneyAmountAfterTransfer,
-                        receiverMoneyAmountAfterTransfer
+                        receiverMoneyAmountAfterTransfer,
+                        senderIpAddress,
+                        sender.getEmail(),
+                        sender.getPhoneNumber(),
+                        senderMoney.getPaymentMethod(),
+                        senderMoney.getPaymentInfo(),
+                        sender.getSerialNumber()
                 )
         );
 
+        // TODO: 부생성자 더 만들던가 정적팩토리 메서드 구현해서 깔끔하게 만들 필요가 있음
         return new TransferResponse(
                 senderMoney.getMember().getName(),
                 receiverMoney.getMember().getName(),
