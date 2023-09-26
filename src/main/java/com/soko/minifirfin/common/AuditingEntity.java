@@ -31,7 +31,7 @@ public class AuditingEntity {
         return updatedDateTime;
     }
 
-    public boolean isDeleted() {
+    public boolean getDeleted() {
         return deleted;
     }
 }
