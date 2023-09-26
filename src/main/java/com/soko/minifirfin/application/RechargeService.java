@@ -3,6 +3,7 @@ package com.soko.minifirfin.application;
 import com.soko.minifirfin.common.Status;
 import com.soko.minifirfin.common.exception.BadRequestCode;
 import com.soko.minifirfin.common.exception.BadRequestException;
+import com.soko.minifirfin.domain.Member;
 import com.soko.minifirfin.domain.MemberMoney;
 import com.soko.minifirfin.domain.Money;
 import com.soko.minifirfin.domain.RechargeHistory;
@@ -36,7 +37,7 @@ public class RechargeService {
     }
 
     @Transactional
-    public RechargeResponse recharge(final Long memberId, final Money rechargeAmount) {
+    public RechargeResponse recharge(final Long memberId, final Money rechargeAmount, final String memberIpAddress) {
         if (rechargeAmount.isOverThan(new Money(RECHARGE_ONCE_LIMITATION))) {
             throw new BadRequestException(RECHARGE_OVER_ONCE_LIMITATION);
         }
@@ -45,11 +46,18 @@ public class RechargeService {
 
         MemberMoney memberMoney = findMemberMoneyByMemberIdForUpdate(memberId);
         memberMoney.recharge(rechargeAmount);
+        Member member = memberMoney.getMember();
 
         RechargeHistory rechargeHistory = rechargeHistoryRepository.save(new RechargeHistory(
                 memberId,
                 rechargeAmount,
-                memberMoney.getMoneyAmount()
+                memberMoney.getMoneyAmount(),
+                memberIpAddress,
+                member.getEmail(),
+                member.getPhoneNumber(),
+                memberMoney.getPaymentMethod(),
+                memberMoney.getPaymentInfo(),
+                member.getSerialNumber()
         ));
 
         return new RechargeResponse(

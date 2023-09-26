@@ -4,6 +4,7 @@ import com.soko.minifirfin.application.RechargeService;
 import com.soko.minifirfin.domain.Money;
 import com.soko.minifirfin.ui.request.RechargeRequest;
 import com.soko.minifirfin.ui.response.RechargeResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,11 +20,12 @@ public class RechargeController {
 
     @PostMapping
     public ResponseEntity<RechargeResponse> recharge(
+            HttpServletRequest request,
             @RequestHeader("Bearer") Long memberId,
             // 굳이 Money Converter 만들진 않고 int로 받아서 Money로 변환
             @RequestBody RechargeRequest rechargeRequest
     ) {
-        RechargeResponse rechargeResponse = rechargeService.recharge(memberId, new Money(rechargeRequest.rechargeAmount()));
+        RechargeResponse rechargeResponse = rechargeService.recharge(memberId, new Money(rechargeRequest.rechargeAmount()), request.getRemoteAddr());
 
         return ResponseEntity.ok().body(rechargeResponse);
     }
