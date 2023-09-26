@@ -1,10 +1,12 @@
 package com.soko.minifirfin.application;
 
 import com.soko.minifirfin.common.Status;
+import com.soko.minifirfin.common.exception.BadRequestCode;
 import com.soko.minifirfin.common.exception.BadRequestException;
-import com.soko.minifirfin.domain.Member;
+import com.soko.minifirfin.domain.MemberMoney;
 import com.soko.minifirfin.domain.Money;
 import com.soko.minifirfin.domain.RechargeHistory;
+import com.soko.minifirfin.repository.MemberMoneyRepository;
 import com.soko.minifirfin.repository.MemberRepository;
 import com.soko.minifirfin.repository.RechargeHistoryRepository;
 import com.soko.minifirfin.ui.response.RechargeResponse;
@@ -23,13 +25,16 @@ import static com.soko.minifirfin.common.exception.BadRequestCode.*;
 @Transactional(readOnly = true)
 public class RechargeService {
     private final RechargeHistoryRepository rechargeHistoryRepository;
+    private final MemberMoneyRepository memberMoneyRepository;
     private final MemberRepository memberRepository;
 
     public RechargeService(
             final RechargeHistoryRepository rechargeHistoryRepository,
+            final MemberMoneyRepository memberMoneyRepository,
             final MemberRepository memberRepository
     ) {
         this.rechargeHistoryRepository = rechargeHistoryRepository;
+        this.memberMoneyRepository = memberMoneyRepository;
         this.memberRepository = memberRepository;
     }
 
@@ -42,20 +47,20 @@ public class RechargeService {
         validateDailyRechargeLimitation(memberId, rechargeAmount);
 
         // TODO: 이 로직이 뒤에 있어도 데드락 안 걸리는지 확인
-        Member member = findMemberByIdForUpdate(memberId);
-        member.getMemberMoney().recharge(rechargeAmount);
+        MemberMoney memberMoney = findMemberMoneyByMemberIdForUpdate(memberId);
+        memberMoney.recharge(rechargeAmount);
 
         RechargeHistory rechargeHistory = rechargeHistoryRepository.save(new RechargeHistory(
                 memberId,
                 rechargeAmount,
-                member.getMemberMoney().getMoneyAmount()
+                memberMoney.getMoneyAmount()
         ));
 
         return new RechargeResponse(
                 rechargeHistory.getId(),
                 memberId,
-                member.getName(),
-                member.getMoneyAmountAsBigDecimal(),
+                memberMoney.getMember().getName(),
+                memberMoney.getMoneyAmountAsBigDecimal(),
                 rechargeAmount.getAmount(),
                 rechargeHistory.getCreatedDateTime(),
                 Status.SUCCESS
@@ -85,8 +90,8 @@ public class RechargeService {
         }
     }
 
-    private Member findMemberByIdForUpdate(Long memberId) {
-        return memberRepository.findByIdForUpdate(memberId)
-                .orElseThrow(() -> new BadRequestException(MEMBER_NOT_FOUND));
+    private MemberMoney findMemberMoneyByMemberIdForUpdate(final Long memberId) {
+        return memberMoneyRepository.findByMemberIdForUpdate(memberId)
+                .orElseThrow(() -> new BadRequestException(BadRequestCode.MEMBER_NOT_FOUND));
     }
 }

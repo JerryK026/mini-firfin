@@ -4,8 +4,10 @@ import com.soko.minifirfin.common.Status;
 import com.soko.minifirfin.common.exception.BadRequestCode;
 import com.soko.minifirfin.common.exception.BadRequestException;
 import com.soko.minifirfin.domain.Member;
+import com.soko.minifirfin.domain.MemberMoney;
 import com.soko.minifirfin.domain.Money;
 import com.soko.minifirfin.domain.TransferHistory;
+import com.soko.minifirfin.repository.MemberMoneyRepository;
 import com.soko.minifirfin.repository.MemberRepository;
 import com.soko.minifirfin.repository.RechargeHistoryRepository;
 import com.soko.minifirfin.repository.TransferHistoryRepository;
@@ -29,22 +31,19 @@ import static com.soko.minifirfin.common.exception.BadRequestCode.SENDER_OVER_ON
 @Transactional(readOnly = true)
 public class TransferService {
 
-    private final MemberRepository memberRepository;
-    private final RechargeHistoryRepository rechargeHistoryRepository;
+    private final MemberMoneyRepository memberMoneyRepository;
     private final TransferHistoryRepository transferHistoryRepository;
 
     public TransferService(
-            final MemberRepository memberRepository,
-            final RechargeHistoryRepository rechargeHistoryRepository,
+            final MemberMoneyRepository memberMoneyRepository,
             final TransferHistoryRepository transferHistoryRepository
     ) {
-        this.memberRepository = memberRepository;
-        this.rechargeHistoryRepository = rechargeHistoryRepository;
+        this.memberMoneyRepository = memberMoneyRepository;
         this.transferHistoryRepository = transferHistoryRepository;
     }
 
     @Transactional
-    public TransferResponse transfer(Long senderId, Long receiverId, Money sendMoneyAmount) {
+    public TransferResponse transfer(final Long senderId, final Long receiverId, final Money sendMoneyAmount) {
         validateSamePerson(senderId, receiverId);
 
         if (sendMoneyAmount.isOverThan(new Money(TRANSFER_ONCE_LIMITATION))) {
@@ -52,20 +51,20 @@ public class TransferService {
         }
 
         // lock 범위 좁히려고 1일 송금 체크한 후 lock을 잡으려 했으나, deadlock 걸려서 lock을 위로 올림
-        Member sender = findMemberByIdForUpdate(senderId);
-        Member receiver = findMemberByIdForUpdate(receiverId);
+        MemberMoney senderMoney = findMemberMoneyByMemberIdForUpdate(senderId);
+        MemberMoney receiverMoney = findMemberMoneyByMemberIdForUpdate(receiverId);
 
         validateDailyTransferLimitation(senderId, sendMoneyAmount);
 
-        sender.getMemberMoney().transfer(receiver.getMemberMoney(), sendMoneyAmount);
+        senderMoney.transfer(receiverMoney, sendMoneyAmount);
 
-        Money senderMoneyAmountAfterTransfer = sender.getMemberMoney().getMoneyAmount();
-        Money receiverMoneyAmountAfterTransfer = receiver.getMemberMoney().getMoneyAmount();
+        Money senderMoneyAmountAfterTransfer = senderMoney.getMoneyAmount();
+        Money receiverMoneyAmountAfterTransfer = receiverMoney.getMoneyAmount();
 
         TransferHistory transferHistory = transferHistoryRepository.save(
                 new TransferHistory(
-                        sender,
-                        receiver,
+                        senderMoney.getMember(),
+                        receiverMoney.getMember(),
                         sendMoneyAmount,
                         senderMoneyAmountAfterTransfer,
                         receiverMoneyAmountAfterTransfer
@@ -73,8 +72,8 @@ public class TransferService {
         );
 
         return new TransferResponse(
-                sender.getName(),
-                receiver.getName(),
+                senderMoney.getMember().getName(),
+                receiverMoney.getMember().getName(),
                 transferHistory.getId(),
                 sendMoneyAmount.getAmount(),
                 senderMoneyAmountAfterTransfer.getAmount(),
@@ -83,7 +82,7 @@ public class TransferService {
         );
     }
 
-    public TransferHistoriesResponse transferHistories(Long senderId, Long cursorId) {
+    public TransferHistoriesResponse transferHistories(final Long senderId, final Long cursorId) {
         List<TransferHistory> transferHistoriesPageByCursor =
                 findTransferHistoriesPageByCursor(senderId, cursorId, DEFAULT_PAGE_SIZE);
 
@@ -97,8 +96,8 @@ public class TransferService {
         );
     }
 
-    private Member findMemberByIdForUpdate(Long memberId) {
-        return memberRepository.findByIdForUpdate(memberId)
+    private MemberMoney findMemberMoneyByMemberIdForUpdate(final Long memberId) {
+        return memberMoneyRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new BadRequestException(BadRequestCode.MEMBER_NOT_FOUND));
     }
 
@@ -123,7 +122,7 @@ public class TransferService {
         );
     }
 
-    private Long getCursor(List<TransferHistory> transferHistories) {
+    private Long getCursor(final List<TransferHistory> transferHistories) {
         if (transferHistories.isEmpty()) {
             return -1L;
         }
@@ -131,13 +130,13 @@ public class TransferService {
         return transferHistories.get(transferHistories.size() - 1).getId();
     }
 
-    private void validateSamePerson(Long senderId, Long receiverId) {
+    private void validateSamePerson(final Long senderId, final Long receiverId) {
         if (senderId.equals(receiverId)) {
             throw new BadRequestException(BadRequestCode.SENDER_AND_RECEIVER_ARE_SAME);
         }
     }
 
-    private void validateDailyTransferLimitation(Long senderId, Money sendMoneyAmount) {
+    private void validateDailyTransferLimitation(final Long senderId, final Money sendMoneyAmount) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime endOfToday = startOfToday.plusDays(1).minusSeconds(1);
 
