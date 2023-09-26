@@ -9,7 +9,8 @@ spring:
     database: mysql
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: update
+      # 과제 편의성을 위해 crate. 원래는 update
+      ddl-auto: create
     properties:
       hibernate:
         show_sql: true

@@ -10,8 +10,8 @@ spring:
     database: mysql
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      # validate여야 하지만 과제 편의성을 위해 update로 둠
-      ddl-auto: update
+      # validate로 두지만, 과제 편의성을 위해 create
+      ddl-auto: create
     properties:
       hibernate:
         show_sql: true
