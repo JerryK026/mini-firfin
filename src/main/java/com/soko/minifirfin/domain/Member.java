@@ -10,9 +10,6 @@ import java.time.LocalDate;
 @Entity
 @SQLDelete(sql = "UPDATE member SET deleted = true WHERE id = ?")
 @Where(clause = "deleted = false")
-//@Table(name = "member", indexes = {
-//        @Index(name = "idx__id__deleted", columnList = "id, deleted")
-//})
 public class Member extends AuditingEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

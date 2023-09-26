@@ -9,9 +9,6 @@ import org.hibernate.annotations.Where;
 @Entity
 @SQLDelete(sql = "UPDATE recharge_history SET deleted = true WHERE id = ?")
 @Where(clause = "deleted = false")
-//@Table(name = "recharge_history", indexes = {
-//        @Index(name = "idx__id__deleted", columnList = "id, deleted")
-//})
 public class RechargeHistory extends AuditingEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
