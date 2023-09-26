@@ -2,7 +2,9 @@ package com.soko.minifirfin.application;
 
 import com.soko.minifirfin.common.exception.BadRequestException;
 import com.soko.minifirfin.domain.Member;
+import com.soko.minifirfin.domain.MemberMoney;
 import com.soko.minifirfin.domain.Money;
+import com.soko.minifirfin.repository.MemberMoneyRepository;
 import com.soko.minifirfin.repository.MemberRepository;
 import com.soko.minifirfin.repository.RechargeHistoryRepository;
 import com.soko.minifirfin.ui.response.RechargeResponse;
@@ -29,20 +31,22 @@ class RechargeServiceTest {
     @Autowired
     private MemberRepository memberRepository;
     @Autowired
+    private MemberMoneyRepository memberMoneyRepository;
+    @Autowired
     private RechargeHistoryRepository rechargeHistoryRepository;
 
     /* Biz */
-    @DisplayName("충전 성공 : 송금 요청한 만큼 잔액이 추가된다")
+    @DisplayName("충전 성공 : 충전 요청한 만큼 잔액이 추가된다")
     @Test
     void recharge_happyCase() {
         Member member = memberRepository.save(new Member("recharger", 50_000, 10_000));
 
         RechargeResponse rechargeResponse = rechargeService.recharge(member.getId(), new Money(30_000));
 
-        Member memberAfterRecharge = memberRepository.findById(member.getId()).get();
+        MemberMoney memberMoney = memberMoneyRepository.findByMemberId(member.getId()).get();
 
         assertThat(rechargeHistoryRepository.findById(rechargeResponse.rechargeHistoryId())).isNotNull();
-        assertThat(memberAfterRecharge.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(10_000 + 30_000));
+        assertThat(memberMoney.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(10_000 + 30_000));
     }
 
     @DisplayName("충전 실패 : 사용자 한도가 초과된다")
@@ -106,8 +110,8 @@ class RechargeServiceTest {
         latch.await();
         service.shutdownNow();
 
-        Member memberAfterCharges = memberRepository.findById(member.getId()).get();
+        MemberMoney memberMoney = memberMoneyRepository.findByMemberId(member.getId()).get();
         // then
-        assertThat(memberAfterCharges.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(moneyAmount * threadCount));
+        assertThat(memberMoney.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(moneyAmount * threadCount));
     }
 }

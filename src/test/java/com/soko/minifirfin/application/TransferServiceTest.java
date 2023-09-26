@@ -3,8 +3,10 @@ package com.soko.minifirfin.application;
 import com.soko.minifirfin.common.exception.BadRequestCode;
 import com.soko.minifirfin.common.exception.BadRequestException;
 import com.soko.minifirfin.domain.Member;
+import com.soko.minifirfin.domain.MemberMoney;
 import com.soko.minifirfin.domain.Money;
 import com.soko.minifirfin.domain.TransferHistory;
+import com.soko.minifirfin.repository.MemberMoneyRepository;
 import com.soko.minifirfin.repository.MemberRepository;
 import com.soko.minifirfin.repository.TransferHistoryRepository;
 import com.soko.minifirfin.ui.response.TransferHistoriesResponse;
@@ -35,6 +37,8 @@ class TransferServiceTest {
     @Autowired
     private MemberRepository memberRepository;
     @Autowired
+    private MemberMoneyRepository memberMoneyRepository;
+    @Autowired
     private TransferHistoryRepository transferHistoryRepository;
 
     /* Biz */
@@ -48,15 +52,12 @@ class TransferServiceTest {
 
         transferService.transfer(sender.getId(), receiver.getId(), new Money(moneyAmount));
 
-        Member newSender = memberRepository.findById(sender.getId())
-                .orElseThrow(IllegalAccessError::new);
-        Member newReceiver = memberRepository.findById(receiver.getId())
-                .orElseThrow(IllegalArgumentException::new);
-        int newHistoriesSize = transferHistoryRepository.findBySenderId(newSender.getId()).size();
+        MemberMoney senderMoney = memberMoneyRepository.findByMemberId(sender.getId()).get();
+        MemberMoney receiverMoney = memberMoneyRepository.findByMemberId(receiver.getId()).get();
+        int newHistoriesSize = transferHistoryRepository.findBySenderId(sender.getId()).size();
 
-        assertThat(newSender.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(0));
-        assertThat(newReceiver.getMoneyAmountAsBigDecimal())
-                .isEqualTo(BigDecimal.valueOf(moneyAmount));
+        assertThat(senderMoney.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(0));
+        assertThat(receiverMoney.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(moneyAmount));
         assertThat(newHistoriesSize).isEqualTo(historiesSize + 1);
     }
 
@@ -223,14 +224,11 @@ class TransferServiceTest {
 
         transferNTimesAsync(threadCount, moneyAmount, sender.getId(), receiver.getId());
 
-        Member newSender = memberRepository.findById(sender.getId())
-                .orElseThrow(IllegalAccessError::new);
-        Member newReceiver = memberRepository.findById(receiver.getId())
-                .orElseThrow(IllegalArgumentException::new);
+        MemberMoney senderMoney = memberMoneyRepository.findByMemberId(sender.getId()).get();
+        MemberMoney receiverMoney = memberMoneyRepository.findByMemberId(receiver.getId()).get();
 
-        assertThat(newSender.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(0));
-        assertThat(newReceiver.getMoneyAmountAsBigDecimal())
-                .isEqualTo(BigDecimal.valueOf(threadCount * moneyAmount));
+        assertThat(senderMoney.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(0));
+        assertThat(receiverMoney.getMoneyAmountAsBigDecimal()).isEqualTo(BigDecimal.valueOf(threadCount * moneyAmount));
     }
 
     private void transferNTimesAsync(int n, int moneyAmount, long senderId, long receiverId)

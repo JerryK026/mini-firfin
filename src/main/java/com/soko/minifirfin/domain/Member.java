@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -22,7 +21,8 @@ public class Member extends AuditingEntity {
     private String phoneNumber;
     private String email;
     private LocalDate birthDay;
-    @Embedded
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "member", cascade = CascadeType.ALL)
+    @JoinColumn(name = "member_money_id")
     private MemberMoney memberMoney;
 
     public Member() {
@@ -35,18 +35,11 @@ public class Member extends AuditingEntity {
         this.email = email;
         this.birthDay = birthDay;
         this.memberMoney = memberMoney;
+        this.memberMoney.setMember(this);
     }
 
-    public Member(String name, int limit, int amount) {
-        this(null, name, null, null, null, new MemberMoney(limit, amount));
-    }
-
-    public Member(String name, int limit) {
-        this(null, name, null, null, null, new MemberMoney(limit, 0));
-    }
-
-    public Member(Long id, String name, MemberMoney memberMoney) {
-        this(id, name, null, null, null, memberMoney);
+    public Member(String name, int limit, int initialAmount) {
+        this(null, name, null, null, null, new MemberMoney(limit, initialAmount));
     }
 
     public Long getId() {
@@ -71,9 +64,5 @@ public class Member extends AuditingEntity {
 
     public MemberMoney getMemberMoney() {
         return memberMoney;
-    }
-
-    public BigDecimal getMoneyAmountAsBigDecimal() {
-        return this.memberMoney.getMoneyAmount().getAmount();
     }
 }
