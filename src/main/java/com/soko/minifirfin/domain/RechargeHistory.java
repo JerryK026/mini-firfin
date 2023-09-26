@@ -9,9 +9,6 @@ import org.hibernate.annotations.Where;
 @Entity
 @SQLDelete(sql = "UPDATE recharge_history SET deleted = true WHERE id = ?")
 @Where(clause = "deleted = false")
-//@Table(name = "recharge_history", indexes = {
-//        @Index(name = "idx__id__deleted", columnList = "id, deleted")
-//})
 public class RechargeHistory extends AuditingEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,14 +22,14 @@ public class RechargeHistory extends AuditingEntity {
     public RechargeHistory() {
     }
 
-    public RechargeHistory(Long id, Long memberId, Money rechargeAmount, Money remainAmount) {
+    public RechargeHistory(final Long id, final Long memberId, final Money rechargeAmount, final Money remainAmount) {
         this.id = id;
         this.memberId = memberId;
         this.rechargeAmount = rechargeAmount;
         this.remainAmount = remainAmount;
     }
 
-    public RechargeHistory(Long memberId, Money rechargeAmount, Money remainAmount) {
+    public RechargeHistory(final Long memberId, final Money rechargeAmount, final Money remainAmount) {
         this(null, memberId, rechargeAmount, remainAmount);
     }
 

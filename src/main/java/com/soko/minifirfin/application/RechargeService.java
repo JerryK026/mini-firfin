@@ -26,27 +26,23 @@ import static com.soko.minifirfin.common.exception.BadRequestCode.*;
 public class RechargeService {
     private final RechargeHistoryRepository rechargeHistoryRepository;
     private final MemberMoneyRepository memberMoneyRepository;
-    private final MemberRepository memberRepository;
 
     public RechargeService(
             final RechargeHistoryRepository rechargeHistoryRepository,
-            final MemberMoneyRepository memberMoneyRepository,
-            final MemberRepository memberRepository
+            final MemberMoneyRepository memberMoneyRepository
     ) {
         this.rechargeHistoryRepository = rechargeHistoryRepository;
         this.memberMoneyRepository = memberMoneyRepository;
-        this.memberRepository = memberRepository;
     }
 
     @Transactional
-    public RechargeResponse recharge(Long memberId, Money rechargeAmount) {
+    public RechargeResponse recharge(final Long memberId, final Money rechargeAmount) {
         if (rechargeAmount.isOverThan(new Money(RECHARGE_ONCE_LIMITATION))) {
             throw new BadRequestException(RECHARGE_OVER_ONCE_LIMITATION);
         }
 
         validateDailyRechargeLimitation(memberId, rechargeAmount);
 
-        // TODO: 이 로직이 뒤에 있어도 데드락 안 걸리는지 확인
         MemberMoney memberMoney = findMemberMoneyByMemberIdForUpdate(memberId);
         memberMoney.recharge(rechargeAmount);
 
@@ -68,7 +64,7 @@ public class RechargeService {
     }
 
     // TODO: 이 로직 RechargeHistories 일급 컬렉션 만들어서 도메인 레벨로 옮기고, 단위 테스트 추가하는 것도 좋을 듯
-    private void validateDailyRechargeLimitation(Long memberId, Money rechargeAmount) {
+    private void validateDailyRechargeLimitation(final Long memberId, final Money rechargeAmount) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime endOfToday = startOfToday.plusDays(1).minusSeconds(1);
         List<RechargeHistory> rechargeHistoriesOfToday =

@@ -102,9 +102,9 @@ public class TransferService {
     }
 
     private List<TransferHistory> findTransferHistoriesPageByCursor(
-            Long senderId,
-            Long cursor,
-            int limit
+            final Long senderId,
+            final Long cursor,
+            final int limit
     ) {
         // first page
         if (Objects.isNull(cursor)) {

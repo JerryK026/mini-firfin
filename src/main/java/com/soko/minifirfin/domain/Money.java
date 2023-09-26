@@ -15,25 +15,25 @@ public class Money {
     public Money() {
     }
 
-    public Money(BigDecimal amount) {
+    public Money(final BigDecimal amount) {
         this(amount, "KRW");
     }
 
-    public Money(int amount) {
+    public Money(final int amount) {
         this(BigDecimal.valueOf(amount), "KRW");
     }
 
-    public Money(int amount, String currency) {
+    public Money(final int amount, final String currency) {
         this(BigDecimal.valueOf(amount), currency);
     }
 
-    public Money(BigDecimal amount, String currency) {
+    public Money(final BigDecimal amount, final String currency) {
         validate(amount);
         this.amount = amount;
         this.currency = currency;
     }
 
-    public boolean isOverThan(Money target) {
+    public boolean isOverThan(final Money target) {
         if (!this.currency.equals(target.currency)) {
             throw new BadRequestException(DIFFERENT_CURRENCY);
         }
@@ -41,11 +41,11 @@ public class Money {
         return this.amount.compareTo(target.amount) > 0;
     }
 
-    public void transferTo(Money target, int sendAmount) {
+    public void transferTo(final Money target, final int sendAmount) {
         transferTo(target, new Money(sendAmount));
     }
 
-    public void transferTo(Money target, Money sendAmount) {
+    public void transferTo(final Money target, final Money sendAmount) {
         if (this.amount.compareTo(sendAmount.amount) < 0) {
             throw new BadRequestException(NOT_ENOUGH_MONEY);
         }
@@ -59,7 +59,7 @@ public class Money {
         this.amount = this.amount.subtract(sendAmount.amount);
     }
 
-    public Money add(Money target) {
+    public Money add(final Money target) {
         return new Money(this.amount.add(target.amount));
     }
 
@@ -72,11 +72,11 @@ public class Money {
         return this.amount + this.currency;
     }
 
-    private boolean areContainsDifferentCurrency(Money target, Money sendAmount) {
+    private boolean areContainsDifferentCurrency(final Money target, final Money sendAmount) {
         return !this.currency.equals(sendAmount.currency) || !this.currency.equals(target.currency) || !target.currency.equals(sendAmount.currency);
     }
 
-    private void validate(BigDecimal target) {
+    private void validate(final BigDecimal target) {
         if (target.compareTo(BigDecimal.ZERO) < 0) {
             throw new BadRequestException(NEGATIVE_MONEY_NOT_ALLOWED);
         }

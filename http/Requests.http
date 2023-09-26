@@ -1,0 +1,90 @@
+### 송금 API
+POST http://localhost:8080/api/v1/transfer
+Content-Type: application/json
+Bearer: 1
+
+{
+  "receiverId": 2,
+  "transferAmount": 1000
+}
+
+### 송금 거절 - 1회 한도 초과
+POST http://localhost:8080/api/v1/transfer
+Content-Type: application/json
+Bearer: 1
+
+{
+  "receiverId": 2,
+  "transferAmount": 2000000
+}
+
+### 송금 거절 - 송신자 잔액 부족
+POST http://localhost:8080/api/v1/transfer
+Content-Type: application/json
+Bearer: 1
+
+{
+  "receiverId": 2,
+  "transferAmount": 20000
+}
+
+### 송금 거절 - 수신자 한도 초과
+POST http://localhost:8080/api/v1/transfer
+Content-Type: application/json
+Bearer: 3
+
+{
+  "receiverId": 4,
+  "transferAmount": 50000
+}
+
+### 송금 거절 - 송신자 1일 한도 초과 (2회 반복실행 필요)
+POST http://localhost:8080/api/v1/transfer
+Content-Type: application/json
+Bearer: 3
+
+{
+  "receiverId": 2,
+  "transferAmount": 1000000
+}
+
+### 송금 내역 확인 API
+GET http://localhost:8080/api/v1/transfer/histories
+Content-Type: application/json
+Bearer: 1
+
+### 충전 API
+POST http://localhost:8080/api/v1/recharge
+Content-Type: application/json
+Bearer: 1
+
+{
+  "rechargeAmount": 10000
+}
+
+### 충전 실패 - 충전자 한도 초과
+POST http://localhost:8080/api/v1/recharge
+Content-Type: application/json
+Bearer: 4
+
+{
+  "rechargeAmount": 2000000
+}
+
+### 충전 실패 - 충전 1회 한도 초과
+POST http://localhost:8080/api/v1/recharge
+Content-Type: application/json
+Bearer: 1
+
+{
+  "rechargeAmount": 6000000
+}
+
+### 충전 실패 - 충전 1일 한도 초과 - 6회 반복
+POST http://localhost:8080/api/v1/recharge
+Content-Type: application/json
+Bearer: 1
+
+{
+  "rechargeAmount": 5000000
+}

@@ -13,7 +13,7 @@ public class RechargeController {
 
     private final RechargeService rechargeService;
 
-    public RechargeController(RechargeService rechargeService) {
+    public RechargeController(final RechargeService rechargeService) {
         this.rechargeService = rechargeService;
     }
 

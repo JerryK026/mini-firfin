@@ -4,5 +4,5 @@ import java.math.BigDecimal;
 
 public record TransferRequest(
     Long receiverId,
-    BigDecimal amount
+    BigDecimal transferAmount
 ) {}

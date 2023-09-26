@@ -4,6 +4,8 @@ import com.soko.minifirfin.MoneyConverter;
 import com.soko.minifirfin.common.AuditingEntity;
 import com.soko.minifirfin.common.exception.BadRequestException;
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
 
@@ -11,6 +13,8 @@ import static com.soko.minifirfin.common.exception.BadRequestCode.*;
 
 
 @Entity
+@SQLDelete(sql = "UPDATE member_money SET deleted = true WHERE id = ?")
+@Where(clause = "deleted = false")
 public class MemberMoney extends AuditingEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,22 +30,22 @@ public class MemberMoney extends AuditingEntity {
 
     public MemberMoney() {}
 
-    public MemberMoney(Long id, Member member, Money moneyLimit, Money moneyAmount) {
+    public MemberMoney(final Long id, final Member member, final Money moneyLimit, final Money moneyAmount) {
         this.id = id;
         this.member = member;
         this.moneyLimit = moneyLimit;
         this.moneyAmount = moneyAmount;
     }
 
-    public MemberMoney(int moneyLimit, int moneyAmount) {
+    public MemberMoney(final int moneyLimit, final int moneyAmount) {
         this(null, null, new Money(moneyLimit), new Money(moneyAmount));
     }
 
-    public void transfer(MemberMoney receiverMoney, int amount) {
+    public void transfer(final MemberMoney receiverMoney, final int amount) {
         transfer(receiverMoney, new Money(amount));
     }
 
-    public void transfer(MemberMoney receiverMoney, Money amount) {
+    public void transfer(final MemberMoney receiverMoney, final Money amount) {
         if (isOverLimitation(receiverMoney, amount)) {
             throw new BadRequestException(RECEIVER_OVER_LIMITATION);
         }
@@ -49,7 +53,7 @@ public class MemberMoney extends AuditingEntity {
         this.moneyAmount.transferTo(receiverMoney.getMoneyAmount(), amount);
     }
 
-    public void recharge(Money moneyForAddition) {
+    public void recharge(final Money moneyForAddition) {
         if (isOverLimitation(moneyForAddition)) {
             throw new BadRequestException(RECHARGER_OVER_LIMITATION);
         }
@@ -77,18 +81,18 @@ public class MemberMoney extends AuditingEntity {
         return moneyAmount;
     }
 
-    public void setMember(Member member) {
+    public void setMember(final Member member) {
         this.member = member;
     }
 
-    private boolean isOverLimitation(MemberMoney receiverMoney, Money amount) {
+    private boolean isOverLimitation(final MemberMoney receiverMoney, final Money amount) {
         Money receiverLimit = receiverMoney.getMoneyLimit();
         Money receiverMoneyAfterTransfer = receiverMoney.getMoneyAmount().add(amount);
 
         return receiverMoneyAfterTransfer.isOverThan(receiverLimit);
     }
 
-    private boolean isOverLimitation(Money addAmount) {
+    private boolean isOverLimitation(final Money addAmount) {
         Money addedMoney = this.moneyAmount.add(addAmount);
 
         return addedMoney.isOverThan(this.moneyLimit);

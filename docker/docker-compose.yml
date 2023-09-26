@@ -1,9 +1,14 @@
 version: "3.8"
 services:
-  db:
+  mysql:
     platform: linux/x86_64
     image: library/mysql:8.0.28
-    container_name: mini-firfin
+    container_name: mini-firfin-mysql
+    deploy:
+      resources:
+        limits:
+          cpus: "3"
+          memory: 4g
     restart: always
     ports:
       - 3306:3306
