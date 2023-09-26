@@ -25,14 +25,14 @@ public class RechargeHistory extends AuditingEntity {
     public RechargeHistory() {
     }
 
-    public RechargeHistory(Long id, Long memberId, Money rechargeAmount, Money remainAmount) {
+    public RechargeHistory(final Long id, final Long memberId, final Money rechargeAmount, final Money remainAmount) {
         this.id = id;
         this.memberId = memberId;
         this.rechargeAmount = rechargeAmount;
         this.remainAmount = remainAmount;
     }
 
-    public RechargeHistory(Long memberId, Money rechargeAmount, Money remainAmount) {
+    public RechargeHistory(final Long memberId, final Money rechargeAmount, final Money remainAmount) {
         this(null, memberId, rechargeAmount, remainAmount);
     }
 
