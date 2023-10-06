@@ -19,3 +19,15 @@ services:
       MYSQL_PASSWORD: password
       TZ: Asia/Seoul
     command: ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_general_ci"]
+
+  redis:
+    platform: linux/x86_64
+    image: library/redis:7.2.1
+    container_name: mini-firfin-redis
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    restart: always
+    ports:
+      - 6379:6379
