@@ -377,6 +377,59 @@ history 내용을 모두 캐싱하면 필요하지 않은 데이터를 모두 �
 
 +) 현재 소프트 딜리트를 사용하고 있기 떄문에, 모든 테이블은 (pk, deleted) 형태로 인덱스가 걸려 있습니다.
 
+=== 과제 제출 이후 추가된 내용 ===
+### score는 pk vs date
+redis를 활용해서 cache를 적용할 때, sorted set을 사용했기 때문에 정렬 기준이 필요했습니다.
+
+이때 고민했던 키는 pk와 created_date 중 어떤 것을 잡아야 최신 순으로 정렬할 수 있을까? 였습니다.
+
+created_date의 경우 "최신"임을 보장할 수 있으나, 경우에 따라 중복이 발생할 수도 있을 거라는 생각이 들었습니다.
+
+만에 하나 중복이 발생해 기록이 누락되어 저장될 경우 사용자 입장에서 중요한 송금 기록에 대해 확인할 수 없으므로 애플리케이션에 신뢰할 수 없는 문제가 발생할 수 있을 거라는 생각이 들었습니다.
+
+pk의 경우 sequence를 사용하거나, UUID와 같이 PK가 순서대로 생성되지 않을 경우로 이전할 경우 문제가 발생할 수 있습니다.
+
+하지만, 캐시의 경우 문제 발생시 언제든지 제거할 수 있을 것이라 판단하여 pk를 score key로 두었습니다.
+
+### 트랜잭션은 session callback? @Transactional?
+만약 송금 로직이 실패하게 되면 송금 내역에도 추가되지 않아야 하므로 cache에 올리는 로직에도 transaction을 적용하였습니다.
+
+lettuce의 경우 transaction을 사용하기 위해 session callback과 @Transactional을 활용한 제어가 가능합니다.
+
+session callback의 경우 구현이 간단하나, Spring의 트랜잭션과 범위가 다르다는 점이 문제가 될 수 있을 것 같았습니다.
+
+session callback 로직을 메서드 맨 끝에 보내더라도, 만에 하나 RDBMS timeout 등의 문제가 발생하여 cache에는 commit이 되나 db에 저장하는 로직에서는 rollback이 수행되는 상황이 발생할 수도 있을 것 같아 문제가 될 수 있다고 판단했습니다.
+
+따라서 트랜잭션 생명주기를 Spring과 맞추기 위하여 @Transactional을 사용하는 편이 낫다고 판단했습니다.
+
+### Connection Pool을 만들지 않더라도 커넥션 공유로 인한 트랜잭션 간섭 문제가 발생하진 않는지?
+lettuce는 connection pool의 default connection 수가 1개입니다.
+
+또한, spring-data-redis를 보면 "Singleton-connection sharing for non-blocking commands"라고 표현하고 있습니다.
+
+트랜잭션을 사용할 때 가장 주의해야 할 점 중 하나는 트랜잭션은 커넥션 당 수행되어야 한다는 것입니다.
+
+만약 Single-connection sharing 방식이라면 송금 요청 A가 수행되는 도중에 송금 요청 B가 수행될 경우 A와 B가 커넥션을 공유하기 때문에 트랜잭션 과정에서 문제가 발생할 수 있을 것이라 판단했습니다.
+
+몇가지의 학습테스트와, 공식문서를 참고하여 setEnableTransactionSupport 옵션을 활용하면 커넥션에 트랜잭션이 바인딩될 수 있음을 확인했습니다.
+
+connection pool의 connection이 1개라면 송금 요청이 여럿 발생했을 때 redis connection이 block되기 때문에 성능에 문제가 될 수 있을거라 판단해 connection pool을 임의의 값 4로 설정했습니다.
+
+### 로그 저장 / 로그 Cache에 쓰기 작업을 실패했다고 해서 rollback 시키는게 맞는지?
+현재 TransactionService에서는 로그를 cache에 쓰기 작업에 실패하거나 로그 저장 작업이 실패하면 rollback을 수행하고 있습니다.
+
+하지만 이 두 과정은 실제 송금에 대한 주요 관심사가 아니라고 볼 수도 있습니다.
+
+그러한 주요 관심사가 아닌 로직이 실패했다고 해서 성공한 주요 관심사 로직에 영향을 주면 사용자 사용성에 영향을 주는 건 아닐까 하는 생각이 들었습니다.
+
+그러나, 그대로 두기로 결정했는데 그 이유는 다음과 같습니다.
+
+1. 만일 송금과 동시에 송금 목록에 대해 조회 요청했을 경우, 실제로는 송금했음에도 불구하고 송금 목록을 조회하지 못할 수도 있다.
+
+2. 만약 송금은 처리됐음에도 모종의 이유로 송금 로그 저장에 실패한다면, 거래 기록을 저장해야 한다는 법을 위반할 수도 있다.
+
+위 두 문제에서 발생할 수 있는 사용자 관점에서의 사용성의 애플리케이션 신뢰도가 더 클 것이라는 판단이 들어 한 트랜잭션으로 묶기로 결정했습니다.
+
 ## 애플리케이션 작성 환경
 - OS : Windows 10 Education
     - CPU : Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz   2.90 GHz
