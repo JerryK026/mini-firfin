@@ -28,25 +28,19 @@ public class RedisConfiguration {
         return new LettuceConnectionFactory(new RedisStandaloneConfiguration(host, port));
     }
 
-//    @Bean
-//    public ObjectMapper objectMapper() {
-//        ObjectMapper mapper = new ObjectMapper();
-//        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-//        mapper.registerModules(new JavaTimeModule(), new Jdk8Module());
-//
-//        return mapper;
-//    }
-
     // 현재 사용처가 TransferHistoryResponse밖에 없기 떄문에 타입을 지정한다. 추후 추가될 요소가 있다면 변경해야 한다.
     @Bean
     public RedisTemplate<String, TransferHistoryResponse> redisTemplate(
         RedisConnectionFactory redisConnectionFactory
     ) {
         RedisTemplate<String, TransferHistoryResponse> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setEnableTransactionSupport(true);
         redisTemplate.setConnectionFactory(redisConnectionFactory);
+
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(
-            new Jackson2JsonRedisSerializer<>(TransferHistoryResponse.class));
+            new Jackson2JsonRedisSerializer<>(TransferHistoryResponse.class)
+        );
 
         return redisTemplate;
     }
@@ -62,14 +56,4 @@ public class RedisConfiguration {
             .cacheDefaults(redisCacheConfiguration)
             .build();
     }
-
-//    private Jackson2JsonRedisSerializer<TransferHistoryResponse> jackson2JsonRedisSerializer() {
-//        Jackson2JsonRedisSerializer<TransferHistoryResponse> serializer =
-//            new Jackson2JsonRedisSerializer<>(TransferHistoryResponse.class);
-//
-//        ObjectMapper mapper = objectMapper();
-//        mapper.enableDefaultTyping();
-//
-//        return serializer;
-//    }
 }

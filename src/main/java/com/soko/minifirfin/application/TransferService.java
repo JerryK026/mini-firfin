@@ -118,12 +118,14 @@ public class TransferService {
     // TODO: 만약 캐시에 값이 1개만 들어있다면, 페이지에 1개만 담아서 response할텐데 이걸 감수할만한가? 괜히 hop만 한 번 더 늘리는 현상은 아닐까?
     // => 차라리 page에 값이 부족하면 db에 질의해서 채워넣어 보는건 어떨까?
     //    => 이 경우 그럼 괜히 관리 포인트만 늘리고 커넥션 수도 늘어나는 것 아닌가?
+    // => 도메인 특성상 한 번 넣어놓고 그걸 바탕으로 여러 번 입금받을 것이지, 매번 입금받는 구조는 아닐 것이라고 판단.
+    //    TTL이 30일이므로 만약 부족한 수만큼 캐시에서 얻어오는 식으로 구성한다면 리소스 낭비가 너무 심할 것이다.
     public TransferHistoriesResponse transferHistories(final Long senderId, final Long cursorId) {
         Set<TransferHistoryResponse> transferHistoryResponses = redisTemplate.opsForZSet()
             .reverseRangeByScore(
                 "transfer:historyResponse:" + senderId,
-                getCursor(senderId),
-                Long.MAX_VALUE,
+                0,
+                getCursor(cursorId),
                 0,
                 DEFAULT_PAGE_SIZE
             );
@@ -194,11 +196,13 @@ public class TransferService {
             return -1L;
         }
 
-        return transferHistories.iterator().next().transferHistoryId();
+        long count = transferHistories.stream().count();
+
+        return transferHistories.stream().skip(count - 1).findFirst().get().transferHistoryId();
     }
 
     private Long getCursor(final Long cursor) {
-        return Objects.isNull(cursor) ? 0 : cursor;
+        return Objects.isNull(cursor) ? 0 : cursor - 1;
     }
 
     private void validateSamePerson(final Long senderId, final Long receiverId) {

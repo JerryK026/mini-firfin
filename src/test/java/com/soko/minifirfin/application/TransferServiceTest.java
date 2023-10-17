@@ -13,7 +13,7 @@ import com.soko.minifirfin.ui.response.TransferHistoriesResponse;
 
 import java.util.List;
 
-import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import static com.soko.minifirfin.common.exception.BadRequestCode.NOT_ENOUGH_MONEY;
 import static com.soko.minifirfin.common.exception.BadRequestCode.RECEIVER_OVER_LIMITATION;
@@ -40,6 +41,14 @@ class TransferServiceTest {
     private MemberMoneyRepository memberMoneyRepository;
     @Autowired
     private TransferHistoryRepository transferHistoryRepository;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @BeforeEach
+    void flushALl() {
+        redisTemplate.getConnectionFactory().getConnection().flushAll();
+    }
 
     /* Biz */
     @DisplayName("송금 성공 : 1.송금자의 잔액이 요청한 만큼 줄고 2.수금자의 잔액이 그만큼 추가되며 3.송금 내역이 저장된다")
@@ -148,9 +157,10 @@ class TransferServiceTest {
         TransferHistoriesResponse transferHistoriesResponse =
                 transferService.transferHistories(sender.getId(), null);
 
-        long expectedCursor = transferHistoryRepository.findBySenderId(sender.getId())
-                .get(50 - 30)
-                .getId();
+        List<TransferHistory> transferHistories = transferHistoryRepository.findBySenderId(
+            sender.getId());
+
+        Long expectedCursor = transferHistories.get(50 - 30).getId();
 
         assertThat(transferHistoriesResponse.data().size()).isEqualTo(30);
         assertThat(transferHistoriesResponse.isEmpty()).isFalse();
