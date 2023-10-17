@@ -25,4 +25,17 @@ public record TransferHistoriesResponse(
             status
         );
     }
+
+    public static TransferHistoriesResponse of(
+        List<TransferHistoryResponse> transferHistoryResponses,
+        long cursorId,
+        Status status
+    ) {
+        return new TransferHistoriesResponse(
+            transferHistoryResponses,
+            false,
+            cursorId,
+            status
+        );
+    }
 }
